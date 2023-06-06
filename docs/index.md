@@ -13,7 +13,7 @@ description: |-
 ## Example Usage
 
 ```terraform
-provider "codeowner" {
+provider "codeowners" {
   codeowners_path = "../CODEOWNERS"
 }
 ```
