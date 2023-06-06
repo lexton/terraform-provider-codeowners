@@ -1,3 +1,3 @@
-provider "scaffolding" {
-  # example configuration here
+provider "codeowner" {
+  codeowners_path = "../CODEOWNERS"
 }

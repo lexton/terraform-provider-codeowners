@@ -5,49 +5,50 @@ package provider
 
 import (
 	"context"
-	"net/http"
+	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hmarr/codeowners"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
-var _ provider.Provider = &ScaffoldingProvider{}
+// Ensure CodeownerProvider satisfies various provider interfaces.
+var _ provider.Provider = &CodeownerProvider{}
 
-// ScaffoldingProvider defines the provider implementation.
-type ScaffoldingProvider struct {
-	// version is set to the provider version on release, "dev" when the
-	// provider is built and ran locally, and "test" when running acceptance
-	// testing.
+// CodeownerProvider defines the provider implementation.
+type CodeownerProvider struct {
 	version string
 }
 
-// ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
+// CodeownerProviderModel describes the provider data model.
+type CodeownerProviderModel struct {
+	CodeownerPath types.String `tfsdk:"codeowner_path"`
 }
 
-func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scaffolding"
+func (p *CodeownerProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "codeowners"
 	resp.Version = p.version
 }
 
-func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (p *CodeownerProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Example provider attribute",
-				Optional:            true,
+			"codeowner_path": schema.StringAttribute{
+				MarkdownDescription: "Path to the CODEOWNERS file",
+				Required:            true,
 			},
 		},
 	}
 }
 
-func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+func (p *CodeownerProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var data CodeownerProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
@@ -55,30 +56,48 @@ func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
-
-	// Example client configuration for data sources and resources
-	client := http.DefaultClient
-	resp.DataSourceData = client
-	resp.ResourceData = client
-}
-
-func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewExampleResource,
+	wd, err := os.Getwd()
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to get current working directory", err.Error())
+		return
 	}
+
+	path := filepath.Join(wd, data.CodeownerPath.ValueString())
+
+	tflog.Info(ctx, "CODEOWNERS path", map[string]any{
+		"path": path,
+	})
+
+	file, err := os.Open(path)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Failed to open %s", path), err.Error())
+		return
+	}
+	defer file.Close()
+
+	ruleset, err := codeowners.ParseFile(file)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Failed to parse %s", data.CodeownerPath.String()), err.Error())
+		return
+	}
+
+	resp.DataSourceData = ruleset
+	resp.ResourceData = ruleset
 }
 
-func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *CodeownerProvider) Resources(ctx context.Context) []func() resource.Resource {
+	return []func() resource.Resource{}
+}
+
+func (p *CodeownerProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewExampleDataSource,
+		NewCodeownerDataSource,
 	}
 }
 
 func New(version string) func() provider.Provider {
 	return func() provider.Provider {
-		return &ScaffoldingProvider{
+		return &CodeownerProvider{
 			version: version,
 		}
 	}
