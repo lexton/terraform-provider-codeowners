@@ -1,3 +1,3 @@
-provider "codeowner" {
+provider "codeowners" {
   codeowners_path = "../CODEOWNERS"
 }
