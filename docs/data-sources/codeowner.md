@@ -17,10 +17,11 @@ Codeowners will find the codeowners for the file at a path
 
 ### Required
 
-- `path` (String) Path to file or directory to determine codeownership
+- `path` (String) Path to determine codeownership, this path is only measured relative to the root of the directory.
 
 ### Read-Only
 
+- `id` (String) The ID of this resource.
 - `owners` (List of String) List of Codeowners
 
 

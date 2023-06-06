@@ -46,7 +46,7 @@ func (d *CodeownerDataSource) Schema(ctx context.Context, req datasource.SchemaR
 				Computed: true,
 			},
 			"path": schema.StringAttribute{
-				MarkdownDescription: "Path to file or directory to determine codeownership",
+				MarkdownDescription: "Path to determine codeownership, this path is only measured relative to the root of the directory.",
 				Required:            true,
 			},
 			"owners": schema.ListAttribute{
@@ -81,13 +81,14 @@ func (d *CodeownerDataSource) Configure(ctx context.Context, req datasource.Conf
 func (d *CodeownerDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data CodeownerDataSourceModel
 
-	data.Id = types.StringValue(data.Path.ValueString())
 	// Read Terraform configuration data into the model
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	data.Id = types.StringValue(data.Path.ValueString())
 
 	rule, err := d.ruleset.Match(data.Path.String())
 	if err != nil {
