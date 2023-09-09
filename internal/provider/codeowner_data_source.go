@@ -90,7 +90,7 @@ func (d *CodeownerDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	data.Id = types.StringValue(data.Path.ValueString())
 
-	rule, err := d.ruleset.Match(data.Path.String())
+	rule, err := d.ruleset.Match(data.Path.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("Failed to match %s", data.Path.String()), err.Error())
 		return

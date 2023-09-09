@@ -2,3 +2,5 @@
 
 /hello/world @lexton
 /hello/there/ @lexton2
+
+*/hello/foo @lexton lexton@example.com
