@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -56,13 +55,14 @@ func (p *CodeownerProvider) Configure(ctx context.Context, req provider.Configur
 		return
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		resp.Diagnostics.AddError("Failed to get current working directory", err.Error())
-		return
-	}
+	//wd, err := os.Getwd()
+	//if err != nil {
+	//	resp.Diagnostics.AddError("Failed to get current working directory", err.Error())
+	//	return
+	//}
 
-	path := filepath.Join(wd, data.CodeownerPath.ValueString())
+	//path := filepath.Join(wd, data.CodeownerPath.ValueString())
+	path := data.CodeownerPath.ValueString()
 
 	tflog.Info(ctx, "CODEOWNERS path", map[string]any{
 		"path": path,
